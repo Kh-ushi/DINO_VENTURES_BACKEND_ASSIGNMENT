@@ -25,9 +25,9 @@ export async function spendFromWallet(
                     where: { id: walletId }
                 });
 
-                 if (!wallet) {
-        throw new Error("Wallet not found");
-    }
+                if (!wallet) {
+                    throw new Error("Wallet not found");
+                }
 
                 return {
                     success: true,
@@ -84,3 +84,199 @@ export async function spendFromWallet(
     );
 };
 
+export async function topUpWallet(
+    walletId: string,
+    amount: bigint,
+    idempotencyKey: string
+) {
+    return withRetry(async () =>
+        prisma.$transaction(async (tx) => {
+
+            const existing = await tx.transaction.findUnique({
+                where: { idempotencyKey },
+            });
+
+            if (existing) {
+                const wallet = await tx.wallet.findUnique({
+                    where: { id: walletId }
+                });
+                if (!wallet) {
+                    throw new Error("Wallet not found");
+                }
+                return {
+                    success: true,
+                    transactionId: existing.id,
+                    newBalance: wallet.currentBalance,
+                    message: "Idempotent replay",
+                };
+            }
+
+            const treasury = await tx.wallet.findFirst({
+                where: { userId: null },
+            });
+
+            if (!treasury) {
+                throw new Error("Treasury wallet not found");
+            }
+
+            const userWallet = await tx.wallet.findUnique({
+                where: { id: walletId },
+            });
+
+            if (!userWallet) {
+                throw new Error("User wallet not found");
+            }
+
+            // Lock wallets in sorted order (deadlock prevention)//
+            const walletIds = [treasury.id, walletId].sort();
+
+            await tx.$queryRaw`
+            SELECT * FROM "Wallet"
+            WHERE id IN (${walletIds[0]}, ${walletIds[1]})
+            FOR UPDATE
+            `
+            //--------------------------------------------------//
+
+            const transaction = await tx.transaction.create({
+                data: {
+                    type: "TOPUP",
+                    status: "SUCCESS",
+                    idempotencyKey,
+                },
+            });
+
+            await tx.ledgerEntry.createMany({
+                data: [
+                    {
+                        transactionId: transaction.id,
+                        walletId: treasury.id,
+                        amount: -amount,
+                    },
+                    {
+                        transactionId: transaction.id,
+                        walletId,
+                        amount: amount,
+                    }
+                ]
+            });
+
+            await tx.wallet.update({
+                where: { id: treasury.id },
+                data: {
+                    currentBalance: treasury.currentBalance - amount,
+                },
+            });
+
+            const updatedUser = await tx.wallet.update({
+                where: { id: walletId },
+                data: {
+                    currentBalance: userWallet.currentBalance + amount,
+                },
+            });
+
+
+            return {
+                success: true,
+                transactionId: transaction.id,
+                newBalance: updatedUser.currentBalance
+            };
+
+        })
+    );
+}
+
+export async function bonusWallet(
+    walletId: string,
+    amount: bigint,
+    idempotencyKey: string
+) {
+    return withRetry(async () =>
+        prisma.$transaction(async (tx) => {
+            const existing = await tx.transaction.findUnique({
+                where: { idempotencyKey },
+            });
+
+            if (existing) {
+                const wallet = await tx.wallet.findUnique({
+                    where: { id: walletId }
+                });
+                if (!wallet) {
+                    throw new Error("Wallet not found");
+                }
+                return {
+                    success: true,
+                    transactionId: existing.id,
+                    newBalance: wallet.currentBalance,
+                    message: "Idempotent replay",
+                };
+            }
+
+            const treasury = await tx.wallet.findFirst({
+                where: { userId: null },
+            });
+
+            if (!treasury) throw new Error("Treasury not found");
+
+
+            const userWallet = await tx.wallet.findUnique({
+                where: { id: walletId },
+            });
+
+            if (!userWallet) throw new Error("User wallet not found");
+
+            const walletIds = [treasury.id, walletId].sort();
+
+            await tx.$queryRaw`
+        SELECT * FROM "Wallet"
+        WHERE id IN (${walletIds[0]}, ${walletIds[1]})
+        FOR UPDATE
+      `;
+
+            const transaction = await tx.transaction.create({
+                data: {
+                    type: "BONUS",
+                    status: "SUCCESS",
+                    idempotencyKey,
+                },
+            });
+
+
+            await tx.ledgerEntry.createMany({
+                data: [
+                    {
+                        transactionId: transaction.id,
+                        walletId: treasury.id,
+                        amount: -amount,
+                    },
+                    {
+                        transactionId: transaction.id,
+                        walletId,
+                        amount: amount,
+                    },
+                ],
+            });
+
+            await tx.wallet.update({
+                where: { id: treasury.id },
+                data: {
+                    currentBalance: treasury.currentBalance - amount,
+                },
+            });
+
+            const updatedUser = await tx.wallet.update({
+                where: { id: walletId },
+                data: {
+                    currentBalance: userWallet.currentBalance + amount,
+                },
+            });
+
+            return {
+                success: true,
+                transactionId: transaction.id,
+                newBalance: updatedUser.currentBalance
+            };
+
+        })
+    );
+
+}
