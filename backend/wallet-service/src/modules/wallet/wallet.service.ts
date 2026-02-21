@@ -280,3 +280,18 @@ export async function bonusWallet(
     );
 
 }
+
+export async function getWalletBalance(walletId: string) {
+  const wallet = await prisma.wallet.findUnique({
+    where: { id: walletId },
+  });
+
+  if (!wallet) {
+    throw new Error("Wallet not found");
+  }
+
+  return {
+    walletId: wallet.id,
+    balance: wallet.currentBalance.toString(),
+  };
+}
