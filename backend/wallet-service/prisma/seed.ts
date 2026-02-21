@@ -1,5 +1,6 @@
 import "dotenv/config";
 import { PrismaClient } from "@prisma/client"
+import { logger } from "../src/utils/logger";
 
 const prisma = new PrismaClient();
 
@@ -48,6 +49,6 @@ async function main() {
 main()
 .then(()=>prisma.$disconnect())
   .catch((e) => {
-    console.error(e);
+    logger.error({ error: e }, "Error seeding database");
     prisma.$disconnect();
   });

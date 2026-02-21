@@ -1,4 +1,4 @@
-
+import { logger } from "./logger";
 export async function withRetry<T>(
     fn: () => Promise<T>,
     retries = 3
@@ -18,7 +18,10 @@ export async function withRetry<T>(
             }
 
             attempt++;
-            console.warn(`Retrying transaction (attempt ${attempt})`);
+            logger.warn(
+                { attempt},
+                "Retrying transaction due to DB conflict"
+            );
         }
     }
 }

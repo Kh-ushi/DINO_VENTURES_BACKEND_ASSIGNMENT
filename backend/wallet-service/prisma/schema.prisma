@@ -45,6 +45,8 @@ model Wallet {
   currentBalance BigInt   @default(0)
   ledgerEntries  LedgerEntry[]
   createdAt      DateTime @default(now())
+
+  @@index([userId])
 }
 
 model Transaction {
@@ -54,6 +56,8 @@ model Transaction {
   idempotencyKey String   @unique
   ledgerEntries  LedgerEntry[]
   createdAt      DateTime @default(now())
+
+  @@index([createdAt])
 }
 
 model LedgerEntry {
@@ -64,6 +68,9 @@ model LedgerEntry {
   walletId      String
   amount        BigInt
   createdAt     DateTime @default(now())
+
+  @@index([walletId])
+  @@index([transactionId])
 }
 
 enum TransactionType {

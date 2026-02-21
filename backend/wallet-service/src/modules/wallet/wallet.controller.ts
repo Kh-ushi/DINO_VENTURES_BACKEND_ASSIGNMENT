@@ -1,5 +1,8 @@
 import { Request, Response } from "express";
 import { spendFromWallet, topUpWallet, bonusWallet, getWalletBalance } from "./wallet.service";
+import { amountSchema } from "../../utils/validation";
+import { AppError } from "../../utils/AppError";
+
 
 interface SpendParams {
     walletId: string;
@@ -11,25 +14,25 @@ interface SpendBody {
 
 export async function spendHandler(req: Request<SpendParams, {}, SpendBody>, res: Response) {
     try {
+
         const { walletId } = req.params;
         const { amount } = req.body;
         const idempotencyKey = req.header("Idempotency-Key");
 
         if (!idempotencyKey) {
-            return res.status(400).json({
-                error: "Idempotency-Key header required",
-            });
+            throw new AppError("Idempotency-Key header required", 400);
         }
 
-        const parsedAmount = Number(amount);
-
-        if (!amount || Number.isNaN(parsedAmount) || parsedAmount <= 0) {
-            return res.status(400).json({ error: "Amount must be a positive number" });
+        const parsedResult = amountSchema.safeParse({ amount });
+        if (!parsedResult.success) {
+            throw new AppError(parsedResult.error.issues[0].message, 400);
         }
+
+        const parsedAmount = BigInt(parsedResult.data.amount);
 
         const result = await spendFromWallet(
             walletId,
-            BigInt(amount),
+            parsedAmount,
             idempotencyKey
         );
 
@@ -43,12 +46,12 @@ export async function spendHandler(req: Request<SpendParams, {}, SpendBody>, res
 
         if (err instanceof Error) {
             if (err.message === "Insufficient balance") {
-                return res.status(409).json({ error: err.message });
+                throw new AppError(err.message, 409);
             }
-            return res.status(400).json({ error: err.message || "Something went wrong" });
+            throw new AppError(err.message || "Something went wrong", 400);
         }
 
-        res.status(500).json({ error: "Internal server error" });
+        throw new AppError("Internal server error", 500);
     }
 }
 
@@ -67,25 +70,24 @@ export async function topUpHandler(req: Request<TopUpParams, {}, TopUpBody>, res
         const idempotencyKey = req.header("Idempotency-Key");
 
         if (!idempotencyKey) {
-            return res.status(400).json({
-                error: "Idempotency-Key header required",
-            });
+            throw new AppError("Idempotency-Key header required", 400);
         }
 
-        const parsedAmount = Number(amount);
-
-        if (!amount || Number.isNaN(parsedAmount) || parsedAmount <= 0) {
-            return res.status(400).json({ error: "Amount must be a positive number" });
+        const parsedResult = amountSchema.safeParse({ amount });
+        if (!parsedResult.success) {
+            throw new AppError(parsedResult.error.issues[0].message, 400);
         }
+
+        const parsedAmount = BigInt(parsedResult.data.amount);
 
         const result = await topUpWallet(
             walletId,
-            BigInt(amount),
+            parsedAmount,
             idempotencyKey
         );
 
         res.json({
-            sucess: result.success,
+            success: result.success,
             transactionId: result.transactionId,
             newBalance: result.newBalance.toString()
         })
@@ -95,12 +97,12 @@ export async function topUpHandler(req: Request<TopUpParams, {}, TopUpBody>, res
     catch (err: unknown) {
         if (err instanceof Error) {
             if (err.message === "Insufficient balance") {
-                return res.status(409).json({ error: err.message });
+                throw new AppError(err.message, 409);
             }
-            return res.status(400).json({ error: err.message || "Something went wrong" });
+            throw new AppError(err.message || "Something went wrong", 400);
         }
 
-        res.status(500).json({ error: "Internal server error" });
+        throw new AppError("Internal server error", 500);
     }
 }
 
@@ -120,20 +122,19 @@ export async function bonusHandler(req: Request<BonusParams, {}, BonusBody>, res
         const idempotencyKey = req.header("Idempotency-Key");
 
         if (!idempotencyKey) {
-            return res.status(400).json({
-                error: "Idempotency-Key header required",
-            });
+            throw new AppError("Idempotency-Key header required", 400);
         }
 
-        const parsedAmount = Number(amount);
-
-        if (!amount || Number.isNaN(parsedAmount) || parsedAmount <= 0) {
-            return res.status(400).json({ error: "Amount must be a positive number" });
+        const parsedResult = amountSchema.safeParse({ amount });
+        if (!parsedResult.success) {
+            throw new AppError(parsedResult.error.issues[0].message, 400);
         }
+
+        const parsedAmount = BigInt(parsedResult.data.amount);
 
         const result = await bonusWallet(
             walletId,
-            BigInt(amount),
+            parsedAmount,
             idempotencyKey
         );
 
@@ -143,7 +144,7 @@ export async function bonusHandler(req: Request<BonusParams, {}, BonusBody>, res
             newBalance: result.newBalance.toString()
         });
     } catch (err: any) {
-        res.status(500).json({ error: err.message });
+        throw new AppError(err.message || "Something went wrong", 400);
     }
 }
 
@@ -158,6 +159,6 @@ export async function getBalanceHandler(req: Request<BalanceParams, {}, {}>, res
         const result = await getWalletBalance(walletId);
         res.json(result);
     } catch (err: any) {
-        res.status(404).json({ error: err.message });
+        throw new AppError(err.message, 404);
     }
 }

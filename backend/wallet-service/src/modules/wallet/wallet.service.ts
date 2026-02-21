@@ -1,6 +1,9 @@
 import { PrismaClient } from "@prisma/client";
 import crypto from "crypto";
 import { withRetry } from "../../utils/withRetry";
+import { logger } from "../../utils/logger";
+
+
 
 const prisma = new PrismaClient();
 
@@ -12,6 +15,11 @@ export async function spendFromWallet(
     return withRetry(async () =>
         prisma.$transaction(async (tx) => {
 
+            logger.info(
+                { walletId, amount, idempotencyKey },
+                "Starting SPEND transaction"
+            );
+
             const existing = await tx.transaction.findUnique({
                 where: { idempotencyKey },
                 include: {
@@ -20,6 +28,11 @@ export async function spendFromWallet(
             });
 
             if (existing) {
+
+                logger.info(
+                    { idempotencyKey, transactionId: existing.id },
+                    "Idempotent replay detected"
+                );
                 const ledger = existing.ledgerEntries[0];
                 const wallet = await tx.wallet.findUnique({
                     where: { id: walletId }
@@ -48,6 +61,10 @@ export async function spendFromWallet(
 
             const wallet = lockedWallet[0];
             if (wallet.currentBalance < amount) {
+                logger.warn(
+                    { walletId, amount, currentBalance: wallet.currentBalance },
+                    "Insufficient balance attempt"
+                );
                 throw new Error("Insufficient balance");
             }
 
@@ -74,6 +91,11 @@ export async function spendFromWallet(
                 },
             });
 
+            logger.info(
+                { walletId, amount, transactionId: transaction.id },
+                "SPEND successful"
+            );
+
             return {
                 success: true,
                 newBalance: updatedWallet.currentBalance,
@@ -92,11 +114,20 @@ export async function topUpWallet(
     return withRetry(async () =>
         prisma.$transaction(async (tx) => {
 
+            logger.info(
+                { walletId, amount, idempotencyKey },
+                "Starting TOPUP transaction"
+            );
+
             const existing = await tx.transaction.findUnique({
                 where: { idempotencyKey },
             });
 
             if (existing) {
+                logger.info(
+                    { idempotencyKey, transactionId: existing.id },
+                    "Idempotent replay detected"
+                );
                 const wallet = await tx.wallet.findUnique({
                     where: { id: walletId }
                 });
@@ -174,6 +205,10 @@ export async function topUpWallet(
                 },
             });
 
+                logger.info(
+                    { walletId, amount, transactionId: transaction.id },
+                    "TOPUP transaction completed"
+                );
 
             return {
                 success: true,
@@ -192,11 +227,19 @@ export async function bonusWallet(
 ) {
     return withRetry(async () =>
         prisma.$transaction(async (tx) => {
+            logger.info(
+                { walletId, amount, idempotencyKey },
+                "Starting BONUS transaction"
+             );
             const existing = await tx.transaction.findUnique({
                 where: { idempotencyKey },
             });
 
             if (existing) {
+                logger.info(
+                    { idempotencyKey, transactionId: existing.id },
+                    "Idempotent replay detected"
+                );
                 const wallet = await tx.wallet.findUnique({
                     where: { id: walletId }
                 });
@@ -270,6 +313,11 @@ export async function bonusWallet(
                 },
             });
 
+                logger.info(
+                    { walletId, amount, transactionId: transaction.id },
+                    "BONUS transaction completed"
+                );
+
             return {
                 success: true,
                 transactionId: transaction.id,
@@ -282,16 +330,40 @@ export async function bonusWallet(
 }
 
 export async function getWalletBalance(walletId: string) {
-  const wallet = await prisma.wallet.findUnique({
-    where: { id: walletId },
-  });
+    const wallet = await prisma.wallet.findUnique({
+        where: { id: walletId },
+    });
 
-  if (!wallet) {
-    throw new Error("Wallet not found");
-  }
+    if (!wallet) {
+        throw new Error("Wallet not found");
+    }
 
-  return {
-    walletId: wallet.id,
-    balance: wallet.currentBalance.toString(),
-  };
+    return {
+        walletId: wallet.id,
+        balance: wallet.currentBalance.toString(),
+    };
+}
+
+
+//BALANCE  INTEGRITY VERIFICATION
+
+export async function verifyWalletIntegrity(walletId: string) {
+    const ledgerSum = await prisma.ledgerEntry.aggregate({
+        where: { walletId },
+        _sum: { amount: true },
+    });
+
+    const wallet = await prisma.wallet.findUnique({
+        where: { id: walletId },
+    });
+
+    if (!wallet) throw new Error("Wallet not found");
+
+
+    return {
+        ledgerSum: ledgerSum._sum.amount?.toString() || "0",
+        currentBalance: wallet.currentBalance.toString(),
+        consistent:
+            ledgerSum._sum.amount?.toString() === wallet.currentBalance.toString(),
+    };
 }
