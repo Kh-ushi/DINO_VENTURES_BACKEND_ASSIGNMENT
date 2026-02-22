@@ -9,9 +9,7 @@ const app = express();
 
 app.use(
   cors({
-    origin: function (origin, callback) {
-      callback(null, true); // allow all
-    },
+    origin: "https://dino-ventures-backend-assignment-j4zpffkx4.vercel.app",
     credentials: true,
   })
 );
