@@ -44,7 +44,7 @@ export async function spendFromWallet(
 
                 return {
                     success: true,
-                    newBalance: wallet.currentBalance,
+                    newBalance: wallet.currentBalance.toString(),
                     transactionId: existing.id,
                     message: "Idempotent replay",
                 };
@@ -98,7 +98,7 @@ export async function spendFromWallet(
 
             return {
                 success: true,
-                newBalance: updatedWallet.currentBalance,
+                newBalance: updatedWallet.currentBalance.toString(),
                 transactionId: transaction.id,
             };
 
@@ -137,7 +137,7 @@ export async function topUpWallet(
                 return {
                     success: true,
                     transactionId: existing.id,
-                    newBalance: wallet.currentBalance,
+                    newBalance: wallet.currentBalance.toString(),
                     message: "Idempotent replay",
                 };
             }
@@ -213,7 +213,7 @@ export async function topUpWallet(
             return {
                 success: true,
                 transactionId: transaction.id,
-                newBalance: updatedUser.currentBalance
+                newBalance: updatedUser.currentBalance.toString()
             };
 
         })
@@ -249,7 +249,7 @@ export async function bonusWallet(
                 return {
                     success: true,
                     transactionId: existing.id,
-                    newBalance: wallet.currentBalance,
+                    newBalance: wallet.currentBalance.toString(),
                     message: "Idempotent replay",
                 };
             }
@@ -321,7 +321,7 @@ export async function bonusWallet(
             return {
                 success: true,
                 transactionId: transaction.id,
-                newBalance: updatedUser.currentBalance
+                newBalance: updatedUser.currentBalance.toString()
             };
 
         })
@@ -345,25 +345,3 @@ export async function getWalletBalance(walletId: string) {
 }
 
 
-//BALANCE  INTEGRITY VERIFICATION
-
-export async function verifyWalletIntegrity(walletId: string) {
-    const ledgerSum = await prisma.ledgerEntry.aggregate({
-        where: { walletId },
-        _sum: { amount: true },
-    });
-
-    const wallet = await prisma.wallet.findUnique({
-        where: { id: walletId },
-    });
-
-    if (!wallet) throw new Error("Wallet not found");
-
-
-    return {
-        ledgerSum: ledgerSum._sum.amount?.toString() || "0",
-        currentBalance: wallet.currentBalance.toString(),
-        consistent:
-            ledgerSum._sum.amount?.toString() === wallet.currentBalance.toString(),
-    };
-}

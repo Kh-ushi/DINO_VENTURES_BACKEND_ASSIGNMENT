@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { spendFromWallet, topUpWallet, bonusWallet, getWalletBalance } from "./wallet.service";
 import { amountSchema } from "../../utils/validation";
 import { AppError } from "../../utils/AppError";
+import { success } from "zod";
 
 
 interface SpendParams {
@@ -39,7 +40,7 @@ export async function spendHandler(req: Request<SpendParams, {}, SpendBody>, res
         res.json({
             success: result.success,
             transactionId: result.transactionId,
-            newBalance: result.newBalance.toString()
+            newBalance: result.newBalance
         });
     }
     catch (err: unknown) {
@@ -89,7 +90,7 @@ export async function topUpHandler(req: Request<TopUpParams, {}, TopUpBody>, res
         res.json({
             success: result.success,
             transactionId: result.transactionId,
-            newBalance: result.newBalance.toString()
+            newBalance: result.newBalance
         })
 
 
@@ -141,7 +142,7 @@ export async function bonusHandler(req: Request<BonusParams, {}, BonusBody>, res
         res.json({
             success: result.success,
             transactionId: result.transactionId,
-            newBalance: result.newBalance.toString()
+            newBalance: result.newBalance
         });
     } catch (err: any) {
         throw new AppError(err.message || "Something went wrong", 400);
@@ -157,7 +158,10 @@ export async function getBalanceHandler(req: Request<BalanceParams, {}, {}>, res
         const { walletId } = req.params;
 
         const result = await getWalletBalance(walletId);
-        res.json(result);
+        res.json({
+            success: true,
+            balance: result.toString()
+        });
     } catch (err: any) {
         throw new AppError(err.message, 404);
     }
