@@ -7,21 +7,10 @@ import { spendHandler, topUpHandler, bonusHandler, getBalanceHandler,getUsersWit
 
 const app = express();
 
-
-const allowedOrigins = [
-  "http://localhost:8080",
-  "http://localhost:5173",
-  "https://dino-ventures-backend-assignment-j4zpffkx4.vercel.app"
-];
-
 app.use(
   cors({
     origin: function (origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error("Not allowed by CORS"));
-      }
+      callback(null, true); // allow all
     },
     credentials: true,
   })
