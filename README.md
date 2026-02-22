@@ -1,6 +1,6 @@
 ## 🦕 Internal Wallet Service ##
 
-**High-integrity wallet service built for a high-traffic virtual credit system (gaming / loyalty platform use-case).**
+## High-integrity wallet service built for a high-traffic virtual credit system (gaming / loyalty platform use-case).**
 
 Designed with a focus on:
 
@@ -14,7 +14,7 @@ Designed with a focus on:
 
 - Production-Ready Architecture
 
-**1. Problem Overview**
+## 1. Problem Overview**
 This service manages application-specific virtual credits (e.g., Gold Coins, Reward Points).
 
 Although the currency is virtual, the system guarantees:
@@ -49,7 +49,7 @@ Example:
 - TypeScript ensures compile-time correctness
 
 
-**3. Architecture Overview**
+## 3. Architecture Overview**
 Core Design: Ledger-Based System (Double-Entry)
 
 Instead of directly mutating a balance column:
@@ -63,7 +63,7 @@ This ensures:
 - Traceability
 - Zero silent data corruption
 
-**4. Implemented Functional Flows**
+## 4. Implemented Functional Flows**
 
 **a. Wallet Top-Up**
 - Credits wallet
@@ -82,7 +82,7 @@ This ensures:
 - Prevents race condition double-spend
 - Idempotent
 
-**5. Concurrency & Race Condition Handling**
+## 5. Concurrency & Race Condition Handling**
 
 Critical section:
 - Balance check
@@ -108,7 +108,7 @@ If two requests try to spend at the same time:
 - Other waits
 - Balance never becomes inconsistent
 
-**6. Idempotency Strategy**
+## 6. Idempotency Strategy**
 - Every mutation requires:
 ```http
 Idempotency-Key: <uuid>
@@ -136,7 +136,7 @@ Guarantees:
 - No duplicate deduction
 - Exactly-once mutation semantics
 
-**8. Deadlock Avoidance**
+## 8. Deadlock Avoidance**
 To minimize deadlock risk:
 
 - Wallet rows are always locked in a deterministic order
@@ -144,7 +144,7 @@ To minimize deadlock risk:
 - Single-row locking strategy per transaction
 - This ensures high concurrency safety.
 
-**9. Running Backend Locally**
+## 9. Running Backend Locally**
 
 ```bash
 npm install
@@ -161,7 +161,7 @@ npx prisma db seed
 npm run dev
 ```
 
-**10. Running Backedn with Docker (Containerization)**
+## 10. Running Backedn with Docker (Containerization)
 
 The project includes inside backend/wallet-service:
 
@@ -180,7 +180,7 @@ Run migrations
 Seed initial data
 Start API server
 
-**11. Testing**
+## 11. Testing
 
 Includes:
 - Unit tests
@@ -230,7 +230,7 @@ To run backend locally:
 
 ```bash
 docker-compose up --build
-
+```
 
 ## Frontend (Demo UI)
 
