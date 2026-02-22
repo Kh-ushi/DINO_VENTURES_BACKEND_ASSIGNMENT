@@ -7,12 +7,20 @@ import { spendHandler, topUpHandler, bonusHandler, getBalanceHandler,getUsersWit
 
 const app = express();
 
+
 app.use(
   cors({
-    origin: "https://dino-ventures-backend-assignment-j4zpffkx4.vercel.app",
+    origin: [
+      "https://dino-ventures-backend-assignment-j4zpffkx4.vercel.app"
+    ],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "Idempotency-Key"],
     credentials: true,
   })
 );
+
+// VERY IMPORTANT
+app.options("*", cors());
 
 app.use(express.json());
 
