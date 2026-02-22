@@ -1,15 +1,6 @@
 {
-    "rewrites": [
-        {
-            "source": "/(.*)",
-            "destination": "/"
-        }
-    ],
-    "redirects": [
-        {
-            "source": "/(.*)",
-            "destination": "https://dino-ventures-backend-assignment.vercel.app/$1",
-            "permanent": true
-        }
-    ]
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/" }
+  ]
+  
 }
