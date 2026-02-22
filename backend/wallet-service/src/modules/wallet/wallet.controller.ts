@@ -38,7 +38,7 @@ export async function spendHandler(req: Request<SpendParams, {}, SpendBody>, res
         );
 
         res.json({
-            
+
             success: result.success,
             transactionId: result.transactionId,
             newBalance: result.newBalance
@@ -96,7 +96,6 @@ export async function topUpHandler(req: Request<TopUpParams, {}, TopUpBody>, res
 
     }
     catch (err: unknown) {
-        console.log("TOPUP ERROR",err);
         if (err instanceof Error) {
             if (err.message === "Insufficient balance") {
                 throw new AppError(err.message, 409);
@@ -180,7 +179,6 @@ export async function getUsersWithWallets(req: Request, res: Response) {
       users:safeUsers,
     });
   } catch (error: any) {
-    console.log(error);
     res.status(500).json({
       success: false,
       message: error.message,
