@@ -194,7 +194,42 @@ Includes:
 - Final balance correct
 
 
+## Deployment
 
+The application is fully containerized and deployed to AWS EC2 using Docker.
+
+### Infrastructure
+
+- **Cloud Provider:** AWS EC2 (Ubuntu 24.04)
+- **Instance Type:** t3.micro
+- **Containerization:** Docker + Docker Compose
+- **Database:** PostgreSQL (Dockerized)
+- **Reverse Proxy:** Nginx
+- **HTTPS:** Let's Encrypt (Certbot)
+- **DNS:** DuckDNS (dynamic DNS)
+
+### Architecture
+
+Internet → Nginx (HTTPS) → Node.js App (Docker) → PostgreSQL (Docker)
+
+Nginx handles:
+- SSL termination
+- Reverse proxy to the backend container
+- Automatic HTTPS redirection
+
+### Docker Setup
+
+The backend and database are orchestrated using `docker-compose.yml`:
+
+- `app` service → Node.js wallet service
+- `db` service → PostgreSQL database
+- Automatic migration execution on startup
+- Database seeding during first boot
+
+To run backend locally:
+
+```bash
+docker-compose up --build
 
 
 ## Frontend (Demo UI)
