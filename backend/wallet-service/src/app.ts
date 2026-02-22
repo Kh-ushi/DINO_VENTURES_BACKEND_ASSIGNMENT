@@ -12,7 +12,7 @@ app.use(
   cors({
     origin: [
       "http://localhost:8080",
-      "https://dino-ventures-backend-assignment-j4zpffkx4.vercel.app"
+      "https://dino-ventures-backend-assignment.vercel.app"
     ],
     credentials: true
   })
