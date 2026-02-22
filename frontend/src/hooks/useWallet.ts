@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getWallets, topUpWallet, spendWallet as spendFromWallet } from "@/api/wallet";
+import { getWallets, topUpWallet, spendWallet } from "@/api/wallet";
 import { WALLET_ID } from "@/utils/constants";
 import { useToast } from "@/hooks/use-toast";
 import type { Transaction } from "@/types/wallet";
@@ -75,36 +75,63 @@ export const useTopUp = () => {
   });
 };
 
-export function useSpend() {
-  // const queryClient = useQueryClient();
-  // const { toast } = useToast();
-  // const { addTransaction } = useTransactions();
+export const useSpend = () => {
+  const queryClient = useQueryClient();
 
-  // return useMutation({
-  //   mutationFn: ({ amount, description }: { amount: string; description?: string }) =>
-  //     spendFromWallet(WALLET_ID, amount, description),
-  //   onSuccess: (data, variables) => {
-  //     queryClient.invalidateQueries({ queryKey: WALLET_KEY });
-  //     addTransaction({
-  //       id: data.transactionId || crypto.randomUUID(),
-  //       type: "spend",
-  //       amount: variables.amount,
-  //       description: variables.description,
-  //       status: data.success ? "success" : "failed",
-  //       timestamp: new Date().toISOString(),
-  //       balanceAfter: data.newBalance,
-  //     });
-  //     toast({
-  //       title: "Payment successful",
-  //       description: `Spent $${variables.amount} from your wallet.`,
-  //     });
-  //   },
-  //   onError: (error: Error) => {
-  //     toast({
-  //       title: "Payment failed",
-  //       description: error.message,
-  //       variant: "destructive",
-  //     });
-  //   },
-  // });
-}
+  const {
+    selectedWalletId,
+    currentBalance,
+    assetType,
+    ledgerEntries,
+    setWallet,
+    setLedgerEntries,
+  } = useWalletStore();
+
+  return useMutation({
+    mutationFn: async (amount: number) => {
+      if (!selectedWalletId)
+        throw new Error("No wallet selected");
+
+      return spendWallet(selectedWalletId, amount.toString());
+    },
+
+    onSuccess: (data, amount) => {
+      if (!selectedWalletId || !assetType) return;
+
+      setWallet(
+        selectedWalletId,
+        Number(data.newBalance),
+        assetType
+      );
+
+      setLedgerEntries([
+        {
+          id: data.transactionId,
+          amount: `-${amount}`,
+          transaction: {
+            type: "SPEND",
+            status: "SUCCESS",
+          },
+          createdAt: new Date().toISOString(),
+        } as any,
+        ...ledgerEntries.map((entry) => ({
+          id: entry.id,
+          amount: entry.amount,
+          createdAt: entry.createdAt,
+          transaction: {
+            type: entry.type,
+            status: entry.status,
+          },
+        })),
+      ]);
+
+      queryClient.invalidateQueries({
+        queryKey: ["wallet", selectedWalletId],
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: ["transactions", selectedWalletId],
+      });
+    },
+  });
+};

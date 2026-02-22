@@ -38,13 +38,13 @@ export async function spendHandler(req: Request<SpendParams, {}, SpendBody>, res
         );
 
         res.json({
+            
             success: result.success,
             transactionId: result.transactionId,
             newBalance: result.newBalance
         });
     }
     catch (err: unknown) {
-
         if (err instanceof Error) {
             if (err.message === "Insufficient balance") {
                 throw new AppError(err.message, 409);
