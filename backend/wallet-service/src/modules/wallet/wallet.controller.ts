@@ -96,6 +96,7 @@ export async function topUpHandler(req: Request<TopUpParams, {}, TopUpBody>, res
 
     }
     catch (err: unknown) {
+        console.log("TOPUP ERROR",err);
         if (err instanceof Error) {
             if (err.message === "Insufficient balance") {
                 throw new AppError(err.message, 409);

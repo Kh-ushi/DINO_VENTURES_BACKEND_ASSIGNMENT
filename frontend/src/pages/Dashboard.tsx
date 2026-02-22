@@ -86,7 +86,15 @@ export default function Dashboard() {
         <select
           className="rounded-lg border border-border bg-background px-3 py-2 text-sm"
           value={selectedUserId || ""}
-          onChange={(e) => setUser(e.target.value)}
+          onChange={(e) => {
+            const user = walletData?.users?.find(
+              (u) => u.id === e.target.value
+            );
+
+            if (user) {
+              setUser(user.id, user.email);
+            }
+          }}
         >
           <option value="">Select User</option>
           {walletData?.users?.map((user) => (
@@ -113,7 +121,7 @@ export default function Dashboard() {
           </p>
         ) : (
           <p className="mt-2 text-4xl font-bold tracking-tight">
-            {formatCurrency(currentBalance,assetType)}
+            {formatCurrency(currentBalance, assetType)}
           </p>
         )}
 
@@ -128,17 +136,17 @@ export default function Dashboard() {
       <div className="grid gap-4 sm:grid-cols-4">
         <StatCard
           title="Total Top Ups"
-          value={formatCurrency(totalTopUps,assetType)}
+          value={formatCurrency(totalTopUps, assetType)}
           icon={<TrendingUp className="h-5 w-5" />}
         />
         <StatCard
           title="Total Spent"
-          value={formatCurrency(totalSpent,assetType)}
+          value={formatCurrency(totalSpent, assetType)}
           icon={<TrendingDown className="h-5 w-5" />}
         />
         <StatCard
           title="Total Bonus"
-          value={formatCurrency(totalBonus,assetType)}
+          value={formatCurrency(totalBonus, assetType)}
           icon={<Activity className="h-5 w-5" />}
         />
         <StatCard
@@ -176,8 +184,8 @@ export default function Dashboard() {
               const iconBg = isTopup
                 ? "bg-primary/10 text-primary"
                 : isBonus
-                ? "bg-green-500/10 text-green-500"
-                : "bg-warning/10 text-warning";
+                  ? "bg-green-500/10 text-green-500"
+                  : "bg-warning/10 text-warning";
 
               return (
                 <div
@@ -202,8 +210,8 @@ export default function Dashboard() {
                         {isTopup
                           ? "Top Up"
                           : isBonus
-                          ? "Bonus"
-                          : "Payment"}
+                            ? "Bonus"
+                            : "Payment"}
                       </p>
                       <p className="text-xs text-muted-foreground">
                         {formatDate(txn.createdAt)}
@@ -212,14 +220,13 @@ export default function Dashboard() {
                   </div>
 
                   <span
-                    className={`text-sm font-semibold ${
-                      isTopup || isBonus
+                    className={`text-sm font-semibold ${isTopup || isBonus
                         ? "text-primary"
                         : "text-foreground"
-                    }`}
+                      }`}
                   >
                     {(isTopup || isBonus) ? "+" : "-"}
-                    {formatCurrency(txn.amount,assetType)}
+                    {formatCurrency(txn.amount, assetType)}
                   </span>
                 </div>
               );

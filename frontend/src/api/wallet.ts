@@ -9,7 +9,7 @@ export async function getWallets(){
 
 export const topUpWallet = async (
   walletId: string,
-  amount: number
+  amount: string
 ) => {
   const res = await api.post(
     `/wallets/${walletId}/topup`,

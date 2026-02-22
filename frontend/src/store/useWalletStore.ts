@@ -32,13 +32,14 @@ interface LedgerEntry {
 
 interface WalletState {
   selectedUserId: string | null;
+  selectedUserEmail: string | null;
   selectedWalletId: string | null;
 
   assetType: string | null;
   currentBalance: number;
   ledgerEntries: LedgerEntry[];
 
-  setUser: (userId: string) => void;
+  setUser: (userId: string,email:string) => void;
 
   setWallet: (
     walletId: string,
@@ -54,15 +55,17 @@ interface WalletState {
 export const useWalletStore = create<WalletState>((set) => ({
   selectedUserId: null,
   selectedWalletId: null,
+  selectedUserEmail: null,
 
   assetType: null,
   currentBalance: 0,
   ledgerEntries: [],
 
-  setUser: (userId) =>
+  setUser: (userId,email) =>
     set({
       selectedUserId: userId,
       selectedWalletId: null,
+      selectedUserEmail: email,
       assetType: null,
       currentBalance: 0,
       ledgerEntries: [],
@@ -91,6 +94,7 @@ export const useWalletStore = create<WalletState>((set) => ({
       selectedUserId: null,
       selectedWalletId: null,
       assetType: null,
+      selectedUserEmail: null,
       currentBalance: 0,
       ledgerEntries: [],
     }),
