@@ -344,4 +344,35 @@ export async function getWalletBalance(walletId: string) {
     };
 }
 
+export async function listUsersWithWallets() {
+  return prisma.user.findMany({
+    include: {
+      wallets: {
+        select: {
+          id: true,
+          currentBalance: true,
+          assetType: {
+            select: {
+              name: true,
+            },
+          },
+          ledgerEntries: {
+            select: {
+              transaction:true,
+              id:true,
+              amount:true,
+              createdAt:true
+            },
+            orderBy: {
+              createdAt: "desc",
+            },
+          },
+        },
+      },
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+}
 

@@ -1,8 +1,8 @@
 import { Request, Response } from "express";
-import { spendFromWallet, topUpWallet, bonusWallet, getWalletBalance } from "./wallet.service";
+import { spendFromWallet, topUpWallet, bonusWallet, getWalletBalance,listUsersWithWallets } from "./wallet.service";
 import { amountSchema } from "../../utils/validation";
 import { AppError } from "../../utils/AppError";
-import { success } from "zod";
+import {serializeBigInt} from "../../utils/bigIntSerializer";
 
 
 interface SpendParams {
@@ -165,4 +165,24 @@ export async function getBalanceHandler(req: Request<BalanceParams, {}, {}>, res
     } catch (err: any) {
         throw new AppError(err.message, 404);
     }
+}
+
+
+export async function getUsersWithWallets(req: Request, res: Response) {
+  try {
+    const users = await listUsersWithWallets();
+
+     const safeUsers = serializeBigInt(users);
+
+    res.json({
+      success: true,
+      users:safeUsers,
+    });
+  } catch (error: any) {
+    console.log(error);
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
 }

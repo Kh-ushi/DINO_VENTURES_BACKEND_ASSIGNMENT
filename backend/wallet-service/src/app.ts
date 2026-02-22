@@ -1,10 +1,22 @@
 import express from "express";
 import { errorHandler } from "./middleware/error.middleware";
+import cors from "cors";
 
-import { spendHandler, topUpHandler, bonusHandler, getBalanceHandler } from "./modules/wallet/wallet.controller";
+
+import { spendHandler, topUpHandler, bonusHandler, getBalanceHandler,getUsersWithWallets } from "./modules/wallet/wallet.controller";
 
 const app = express();
+
+app.use(
+    cors({
+        origin: "http://localhost:8080",
+        credentials: true,
+    })
+);
+
 app.use(express.json());
+
+app.get("/wallets", getUsersWithWallets);
 
 app.post("/wallets/:walletId/spend", spendHandler);
 app.post("/wallets/:walletId/topup", topUpHandler);
