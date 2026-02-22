@@ -176,9 +176,37 @@ docker-compose up --build
 This will:
 
 Start PostgreSQL
-
 Run migrations
-
 Seed initial data
-
 Start API server
+
+**11. Testing**
+
+Includes:
+- Unit tests
+- Concurrency integration test
+- Idempotency verification
+- Ledger sum validation
+- Example concurrency scenario tested:
+- 5 parallel spend requests
+- Only valid number succeed
+- Others fail
+- Final balance correct
+
+
+
+
+
+## Frontend (Demo UI)
+
+A minimal React + TypeScript frontend is provided for demonstration and API testing purposes.
+
+Production URL:
+https://dino-ventures-backend-assignment.vercel.app
+
+The frontend connects to the deployed backend over HTTPS and demonstrates:
+- Wallet selection
+- Top-up
+- Spend
+- Transaction history
+- Idempotency behavior
